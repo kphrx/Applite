@@ -18,8 +18,12 @@ struct CaskInfo: Codable {
     /// Short description
     let description: String
     let homepageURL: URL?
-    /// If true app has a .pkg installer
+    /// If true app has pkg artifacts
     let pkgInstaller: Bool
+    /// If true app has script installer artifacts
+    let scriptInstaller: Bool
+    /// If true app has manual installer artifacts
+    let manualInstaller: Bool
     let warning: CaskWarning?
 
     /// Initialize from a ``CaskDTO`` data transfer object
@@ -32,7 +36,36 @@ struct CaskInfo: Codable {
         self.name = rawData.nameArray[safeIndex: 0] ?? "N/A"
         self.description = rawData.desc ?? "N/A"
         self.homepageURL = URL(string: rawData.homepage)
-        self.pkgInstaller = rawData.url.hasSuffix("pkg")
+        self.pkgInstaller = rawData.artifacts.contains {
+            switch $0 {
+            case .known(type: .pkg, args: _): true
+            default: false
+            }
+        }
+        self.scriptInstaller = rawData.artifacts.contains {
+            switch $0 {
+            case .known(type: .installer, args: .array(let args)):
+                if case .object(let argument) = args.first,
+                   case (key: "script", value: _)? = argument.first {
+                    true
+                } else {
+                    false
+                }
+            default: false
+            }
+        }
+        self.manualInstaller = rawData.artifacts.contains {
+            switch $0 {
+            case .known(type: .installer, args: .array(let args)):
+                if case .object(let argument) = args.first,
+                   case (key: "manual", value: .string(_))? = argument.first {
+                    true
+                } else {
+                    false
+                }
+            default: false
+            }
+        }
 
         if rawData.disabled {
             self.warning = .disabled(date: rawData.disableDate ?? "N/A", reason: rawData.disableReason ?? "N/A")
@@ -45,7 +78,7 @@ struct CaskInfo: Codable {
         }
     }
 
-    init(token: String, fullToken: String, tap: String, name: String, description: String, homepageURL: URL?, pkgInstaller: Bool, warning: CaskWarning?) {
+    init(token: String, fullToken: String, tap: String, name: String, description: String, homepageURL: URL?, pkgInstaller: Bool, scriptInstaller: Bool, manualInstaller: Bool, warning: CaskWarning?) {
         self.token = token
         self.fullToken = fullToken
         self.tap = tap
@@ -53,6 +86,8 @@ struct CaskInfo: Codable {
         self.description = description
         self.homepageURL = homepageURL
         self.pkgInstaller = pkgInstaller
+        self.scriptInstaller = scriptInstaller
+        self.manualInstaller = manualInstaller
         self.warning = warning
     }
 }

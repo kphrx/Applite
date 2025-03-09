@@ -42,6 +42,8 @@ final class Cask: ObservableObject {
         description: "Test application",
         homepageURL: URL(string: "https://aerolite.dev/"),
         pkgInstaller: false,
+        scriptInstaller: false,
+        manualInstaller: false,
         warning: nil
     ), downloadsIn365days: 100)
 }

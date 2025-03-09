@@ -11,7 +11,7 @@ extension Cask {
     func launchApp() async throws {
         let appPath: String
 
-        if self.info.pkgInstaller {
+        if self.info.pkgInstaller || self.info.scriptInstaller || self.info.manualInstaller {
             // Open PKG type app
             var applicationsDirectory = "/Applications"
 
